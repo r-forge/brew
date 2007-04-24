@@ -149,17 +149,18 @@ function(file=stdin(),output=stdout(),text=NULL,envir=parent.frame(),run=TRUE){
 	if (closeIcon) close(icon)
 
 	if (run){
-
 		sunk <- FALSE
 		if (!exists('.brew.output',where=envir) || !is.null(match.call()$output)) {
-			sink(output)
-			sunk <- ifelse(output!=stdout() && output!=stderr(), TRUE, FALSE)
+			sunk <- TRUE
 			assign('.brew.output',output,pos=envir)
+			sink(output)
 		}
 
 		ret <- try(eval(parse(text=code),envir=envir))
 
-		if (sunk) sink()
+		# sink() will warn if trying to end the real stdout diversion
+		if (sunk && unclass(output) != 1) sink()
+		if (exists('.brew.output',where=envir)) rm('.brew.output',pos=envir)
 		invisible(ret)
 	} else {
 		invisible(parse(text=code))
